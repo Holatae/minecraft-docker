@@ -1,0 +1,69 @@
+version: "3.9"
+services:
+  survivalserver:
+    build: minecraftserver/
+    image: minecraft:latest
+    volumes:
+      - survival-server-data:/app/server
+    depends_on:
+      - db
+      - proxy
+    container_name: survival
+    environment: 
+      PORT: 25566
+  
+  lobbyserver:
+    build: minecraftserver/
+    image: minecraft:latest
+    volumes: 
+      - lobby-server-data:/app/server
+    depends_on: 
+      - db
+      - proxy
+    container_name: lobby
+    environment: 
+      PORT: 25567
+
+  proxy:
+    build: bungeecord/
+    image: bungeecord:latest
+    ports:
+      - 25565:25565
+    volumes: 
+      - proxy-server-data:/app/server
+  db:
+    image: mariadb:latest
+    container_name: luckperms_db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: hejsan
+      MARIADB_DATABASE: minecraft
+    volumes:
+      - "/var/lib/mysql"
+
+  rcon:
+    image: itzg/rcon:latest
+    environment:
+      RWA_USERNAME: admin
+      RWA_PASSWORD: admin
+      RWA_ADMIN: "TRUE"
+      # is referring to the hostname of 'mc' compose service below
+      RWA_RCON_HOST: survival
+      # needs to match the password configured for the container, which is 'minecraft' by default
+      RWA_RCON_PASSWORD: minecraft
+    ports:
+      - 4326:4326
+      - 4327:4327
+
+    depends_on:
+      - db
+      - server
+
+volumes:
+  survival-server-data:
+    external: true
+  lobby-server-data:
+    external: true
+  proxy-server-data:
+    external: true
+  
